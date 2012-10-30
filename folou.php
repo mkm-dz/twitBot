@@ -10,8 +10,8 @@ require 'main_helper.php';
 define("CONST_LIMITEPETICIONES", 1000);
 
 //$retarr = follow_followers($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$user_whose_followers_to_follow,$user,$mensajito);
-$retarr = unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
-//$retarr =topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,'dichosmexicanos',$user,$mensajito);
+//$retarr = unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
+$retarr =topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
 //$retarr=followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret,'123456',$user,$mensajito);
 
 exit(0);
@@ -116,7 +116,7 @@ function function_post($consumer_key, $consumer_secret, $access_token, $access_t
  *@param $consumer_secret password de la $consumer_key
  *@param $access_token Representa al usuario, es el token que genero al dar permisos a la aplicacion
  *@param $access_token_secret Representa el password del access_token
- *@param $user_whose Nombre de usuario que dejara de seguir a sus usuarios
+ *@param $user_name Nombre de usuario que dejara de seguir a sus usuarios
  *@param $only_nonfollowers Si es verdadero, se dejara de seguir solo a quien no te siga, de lo contrario se dejara de seguir a todos
  */
 function Unfollower($consumer_key, $consumer_secret, $access_token, $access_token_secret, $user_name, $only_nonfollowers)
@@ -179,30 +179,58 @@ function Unfollower($consumer_key, $consumer_secret, $access_token, $access_toke
     
 }
 
-function topicFollow($consumer_key, $consumer_secret, $access_token, $access_token_secret, $topic, $your_screen_name, $mensaje)
+/*
+ *Hace follow a un usuario que haya usado el trending topic especificado.
+ *
+ *@param $consumer_key Llave que identifica la aplicacion dentro de twitter
+ *@param $consumer_secret password de la $consumer_key
+ *@param $access_token Representa al usuario, es el token que genero al dar permisos a la aplicacion
+ *@param $access_token_secret Representa el password del access_token
+ *@param $topic El trending topic que se usara para determinar a que usuario seguir.
+ *@param $user_name Nuestro nombre de usuario
+ *@param $mensaje Representa un mensaje que se enviara al usuario antes de hacer el follow.
+ */
+
+function topicFollow($consumer_key, $consumer_secret, $access_token, $access_token_secret, $topic, $user_name, $mensaje)
 {
+    //establecemos la busqueda por topico y que sean los mas recientes
     $check_valores[0]          = 'q';
     $check_valor_parametros[0] = $topic;
-    $check_valores[1]          = 'rpp';
-    $check_valor_parametros[1] = '15';
-    $check_valores[2]          = 'result_type';
-    $check_valor_parametros[2] = 'recent';
-    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'http://search.twitter.com/search.json', $check_valores, $check_valor_parametros);
+    $check_valores[1]          = 'result_type';
+    $check_valor_parametros[1] = 'recent';
+    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true,
+        'https://api.twitter.com/1.1/search/tweets.json', $check_valores, $check_valor_parametros,true);
     list($info, $header, $body) = $responseCheck;
     $ids           = json_decode($body, true);
-    $id_especifico = $ids['results'][0]['from_user_id'];
+    $id_especifico = $ids['statuses'][0]['user']['id'];
     
-    followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $id_especifico, $your_screen_name, $mensaje);
+    //llamamos a la funcion para seguir al usuario que obtuvimos anteriormente
+    followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $id_especifico, $user_name, $mensaje);
 }
 
-function followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $user_whom_follow, $your_screen_name, $mensaje)
+/*
+ *Hace follow a un usuario.
+ *
+ *@param $consumer_key Llave que identifica la aplicacion dentro de twitter
+ *@param $consumer_secret password de la $consumer_key
+ *@param $access_token Representa al usuario, es el token que genero al dar permisos a la aplicacion
+ *@param $access_token_secret Representa el password del access_token
+ *@param $user_whom_follow El usuario al que queremos seguir.
+ *@param $user_name Nuestro nombre de usuario
+ *@param $mensaje Representa un mensaje que se enviara al usuario antes de hacer el follow.
+ */
+function followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $user_whom_follow, $user_name, $mensaje)
 {
-    $check_valores[1]          = 'user_id_b';
-    $check_valor_parametros[1] = $user_whom_follow;
-    $check_valores[0]          = 'screen_name_a';
-    $check_valor_parametros[0] = $your_screen_name;
-    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'http://api.twitter.com/1/friendships/exists.json', $check_valores, $check_valor_parametros);
+
+    $check_valores[0]          = 'screen_name';
+    $check_valor_parametros[0] =$user_whom_follow;
+    //$responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'http://api.twitter.com/1/friendships/exists.json', $check_valores, $check_valor_parametros,true);
+    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/friendships/lookup.json', $check_valores, $check_valor_parametros,true);
+        list($info, $header, $body) = $responseCheck;
+    $ids           = json_decode($body, true);
     
+    print_r($responseCheck);
+ /*
     if ($responseCheck[2] == 'false') {
         $valores[0]         = 'user_id';
         $valor_parametro[0] = $user_whom_follow;
@@ -215,7 +243,7 @@ function followUser($consumer_key, $consumer_secret, $access_token, $access_toke
         $screen_name = json_decode($body, true);
         
         $valores3[0]         = 'screen_name';
-        $valor_parametro3[0] = $your_screen_name;
+        $valor_parametro3[0] = $user_name;
         $tweetLine           = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'http://api.twitter.com/1/statuses/user_timeline.json', $valores3, $valor_parametro3);
         list($info, $header, $body) = $tweetLine;
         $tweet_id = json_decode($body, true);
@@ -232,19 +260,19 @@ function followUser($consumer_key, $consumer_secret, $access_token, $access_toke
         $postMention         = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, true, 'http://api.twitter.com/1/statuses/update.json', $valores2, $valor_parametro2);
         
         
-        /*******Mensajes directos
-        $valores2[0]='user_id';
-        $valor_parametro2[0]=$user_whom_follow;
-        $valores2[1]='text';	
-        $valor_parametro2[1]=$mensaje;		
-        $directMessage=function_post($consumer_key,$consumer_secret, $access_token, $access_token_secret,true,true,'http://api.twitter.com/1/direct_messages/new.json',$valores2,$valor_parametro2);
-        ********/
+        //Mensajes directos
+        //$valores2[0]='user_id';
+        //$valor_parametro2[0]=$user_whom_follow;
+        //$valores2[1]='text';	
+        //$valor_parametro2[1]=$mensaje;		
+        //$directMessage=function_post($consumer_key,$consumer_secret, $access_token, $access_token_secret,true,true,'http://api.twitter.com/1/direct_messages/new.json',$valores2,$valor_parametro2);
+        
         return true;
     } else {
         echo "Ya es amigo " . $user_whom_follow . "<br />";
         return false;
     }
-    
+    */
     
 }
 
