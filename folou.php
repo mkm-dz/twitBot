@@ -2,6 +2,7 @@
 require 'globals.php';
 require 'oauth_helper.php';
 require 'utils.php';
+//definimos las variables principales
 require 'main_helper.php';
 
 
@@ -10,9 +11,9 @@ require 'main_helper.php';
 //it to avoid getting banned)
 define("CONST_LIMITEPETICIONES", 1000);
 
-//$retarr = follow_followers($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$user_whose_followers_to_follow,$user,$mensajito);
+//$retarr = follow_followers($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$user_togetFollowersFrom,$user,$mensajito);
 //$retarr = unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
-$retarr =topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
+//$retarr =topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
 //$retarr=followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret,'123456',$user,$mensajito);
 
 exit(0);
@@ -31,7 +32,7 @@ function follow_followers($consumer_key, $consumer_secret, $access_token, $acces
     $check_valor_parametros[0] = '-1';
     $check_valores[1]          = 'screen_name';
     $check_valor_parametros[1] = $user_whose_followers_to_follow;
-    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'http://api.twitter.com/1/followers/ids.json', $check_valores, $check_valor_parametros);
+    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/friends/ids.json', $check_valores, $check_valor_parametros,true);
     list($info, $header, $body) = $responseCheck;
     $ids = json_decode($body, true);
     

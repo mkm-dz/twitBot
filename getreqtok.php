@@ -2,6 +2,13 @@
 require 'globals.php';
 require 'oauth_helper.php';
 
+
+//define the following values
+//define('OAUTH_CONSUMER_KEY', 'insert_value_here');
+//define('OAUTH_CONSUMER_SECRET', 'insert_value_here');
+
+
+
 // Callback can either be 'oob' or a url
 $callback='oob';
 

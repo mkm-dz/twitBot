@@ -1,5 +1,4 @@
 <?php
-require "globals_helper.php";
 /**
  * Globals and utilities for OAuth Examaples package
  */
