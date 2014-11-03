@@ -1,8 +1,8 @@
 <?php
  
- //
- // Makes a binary search.
- //
+ /*
+  * Makes a binary search.
+  */
  if (!function_exists ( "binarySearch" ))
  {
      function binarySearch(array $array, $search)
@@ -24,10 +24,12 @@
  }
  
  
-//
-// Retrieves an array of the trending topics by parsing a web page.
-// <param $numberOfTopics> Specifies the number of topics that will be retrieved from the webpage </param>
-// 
+ /*
+ * Retrieves an array of the trending topics by parsing a web page.
+ *
+ * @param $numberOfTopics Specifies the number of topics that will be retrieved from the webpage.
+ * @returns An array containing the trending topics.
+ */ 
 if (!function_exists ( "GetTrendings" ))
 {
     function GetTrendings($numberOfTopics)
@@ -44,9 +46,9 @@ if (!function_exists ( "GetTrendings" ))
     }
 }
 
-//
-// Retrieves a random trending topic.
-//
+/*
+ * Retrieves a random trending topic.
+ */
 if (!function_exists ( "GetTrending" ))
 {
     function GetTrending()

@@ -103,7 +103,6 @@ function function_post($consumer_key, $consumer_secret, $access_token, $access_t
         
         if ($body) {
             logit("tweet:INFO:response:");
-            //	print(json_pretty_print($body));
         }
         
         $retarr = $response;
@@ -247,9 +246,11 @@ function followUser($consumer_key, $consumer_secret, $access_token, $access_toke
         
         //Obtiene el ultimo tweet
         $check_valores[0]          = 'screen_name';
-        $check_valor_parametros[0] =$user_name;
+        $check_valor_parametros[0] = $user_name;
         $check_valores[1]          = 'count';
         $check_valor_parametros[1] =1;
+        $check_valor[2] = 'exclude_replies';
+        $check_valor_parametros[2] = 'false';
         $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/statuses/user_timeline.json', $check_valores, $check_valor_parametros,true);
         list($info, $header, $body) = $responseCheck;
         $tweetId           = json_decode($body, true);
