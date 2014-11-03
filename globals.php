@@ -3,8 +3,7 @@
  * Globals and utilities for OAuth Examaples package
  */
 
-
-$progname = $argv[0];
+//$progname = $argv[0];
 $debug = 1; // Set to 1 for verbose debugging output
 
 function logit($msg,$preamble=true)

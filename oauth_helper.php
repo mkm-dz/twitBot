@@ -148,10 +148,14 @@ function normalize_url($url)
 
   $scheme = $parts['scheme'];
   $host = $parts['host'];
-  $port = $parts['port'];
+  if(array_key_exists('port',$parts))
+  {
+    $port = $parts['port'];
+  }
+
   $path = $parts['path'];
 
-  if (! $port) {
+  if (!isset($port)) {
     $port = ($scheme == 'https') ? '443' : '80';
   }
   if (($scheme == 'https' && $port != '443')

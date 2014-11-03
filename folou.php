@@ -13,8 +13,10 @@ define("CONST_LIMITEPETICIONES", 1000);
 
 //$retarr = follow_followers($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$user_togetFollowersFrom,$user,$mensajito);
 //$retarr = unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
-//$retarr =topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
-//$retarr=followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret,'123456',$user,$mensajito);
+//$retarr = topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
+//$retarr = followUser($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret,'123456',$user,$mensajito);
+$retarr = Unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
+
 
 exit(0);
 
@@ -162,7 +164,7 @@ function Unfollower($consumer_key, $consumer_secret, $access_token, $access_toke
             
             if ($only_nonfollowers) {
                 if (FALSE == binarySearch($idsFollowers['ids'], $amigoActual)) {
-                    print("Dejando de seguir al amigo " . $limitePeticiones . " de " . CONST_LIMITEPETICIONES);
+                    print("Dejando de seguir al amigo " . $limitePeticiones . " de " . CONST_LIMITEPETICIONES . "<br />");
                     $responseCheck              = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, true, 'https://api.twitter.com/1.1/friendships/destroy.json', $check_valores2, $check_valor_parametros2,true);
                     $limitePeticiones++;
                 }
