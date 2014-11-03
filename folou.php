@@ -7,15 +7,15 @@ require 'main_helper.php';
 
 
 
-//this constant represent the maximu limit of petitions that the script will do (use
+//this constant represent the maximum limit of petitions that the script will do (use
 //it to avoid getting banned)
 define("CONST_LIMITEPETICIONES", 1000);
 
 //$retarr = follow_followers($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$user_togetFollowersFrom,$user,$mensajito);
 //$retarr = unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
-//$retarr = topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
+$retarr = topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
 //$retarr = followUser($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret,'123456',$user,$mensajito);
-$retarr = Unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
+//$retarr = Unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
 
 
 exit(0);
@@ -206,10 +206,18 @@ function topicFollow($consumer_key, $consumer_secret, $access_token, $access_tok
         'https://api.twitter.com/1.1/search/tweets.json', $check_valores, $check_valor_parametros,true);
     list($info, $header, $body) = $responseCheck;
     $ids           = json_decode($body, true);
-    $id_especifico = $ids['statuses'][0]['user']['id'];
-    
-    //llamamos a la funcion para seguir al usuario que obtuvimos anteriormente
-    followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $id_especifico, $user_name, $mensaje);
+    if(sizeof($ids['statuses']) > 0)
+    {
+        $id_especifico = $ids['statuses'][0]['user']['id'];
+        //llamamos a la funcion para seguir al usuario que obtuvimos anteriormente
+        print("<table><tr><td>Trending Topic:".$topic."</td><td>");
+        followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $id_especifico, $user_name, $mensaje);
+        print("</td></tr></table>");
+    }
+    else
+    {
+        print("No existe gente posteando acerca de: ".$topic);
+    }
 }
 
 /*
