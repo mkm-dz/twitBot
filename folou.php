@@ -1,21 +1,18 @@
 <?php
-require 'globals.php';
-require 'oauth_helper.php';
-require 'utils.php';
-//definimos las variables principales
-require 'main_helper.php';
 
+//definimos las variables principales
+require_once('helper.php');
+require_once('twitteroauth.php');
 
 
 //this constant represent the maximum limit of petitions that the script will do (use
 //it to avoid getting banned)
-define("CONST_LIMITEPETICIONES", 1000);
+define("CONST_LIMITEPETICIONES", 200);
 
-//$retarr = follow_followers($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$user_togetFollowersFrom,$user,$mensajito);
-//$retarr = unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
-$retarr = topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret,$trendingTopic,$user,$mensajito);
+//$retarr = follow_followers($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret, $user_whose_followers_to_follow,$user,$mensajito);
+//$retarr = topicFollow($myconsumerkey, $myconsumersecret,$access_token, $access_token_secret, $trendingTopic, $user, $mensajito);
 //$retarr = followUser($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret,'123456',$user,$mensajito);
-//$retarr = Unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
+$retarr = Unfollower($myconsumerkey, $myconsumersecret, $access_token, $access_token_secret, $user, true);
 
 
 exit(0);
@@ -34,12 +31,11 @@ function follow_followers($consumer_key, $consumer_secret, $access_token, $acces
     $check_valor_parametros[0] = '-1';
     $check_valores[1]          = 'screen_name';
     $check_valor_parametros[1] = $user_whose_followers_to_follow;
-    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/friends/ids.json', $check_valores, $check_valor_parametros,true);
-    list($info, $header, $body) = $responseCheck;
-    $ids = json_decode($body, true);
+    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, 'friends/ids', $check_valores, $check_valor_parametros);
     
     $available_total = 0;
-    foreach ($ids['ids'] as $temp_user) {
+    foreach ($responseCheck->{'ids'} as $temp_user) {
+    echo $temp_user;
         $resultado = followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $temp_user, $your_screen_name, $mensaje);
         if ($resultado) {
             $available_total++;
@@ -48,67 +44,6 @@ function follow_followers($consumer_key, $consumer_secret, $access_token, $acces
         if ($available_total > 150)
             break;
     }
-}
-
-function function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, $usePost, $passOAuthInHeader, $url, $valores, $valor_parametro, $useSSL)
-{
-    $retarr   = array();
-    $puerto   = 80;
-    // return value
-    $response = array();
-    for ($i = 0; $i < count($valores); $i++) {
-        $params[$valores[$i]] = $valor_parametro[$i];
-    }
-    
-    $params['oauth_version']          = '1.0';
-    $params['oauth_nonce']            = mt_rand();
-    $params['oauth_timestamp']        = time();
-    $params['oauth_consumer_key']     = $consumer_key;
-    $params['oauth_token']            = $access_token;
-    // compute hmac-sha1 signature and add it to the params list
-    $params['oauth_signature_method'] = 'HMAC-SHA1';
-    $params['oauth_signature']        = oauth_compute_hmac_sig($usePost ? 'POST' : 'GET', $url, $params, $consumer_secret, $access_token_secret);
-    // Pass OAuth credentials in a separate header or in the query string
-    
-    if ($useSSL) {
-        $puerto = 443;
-    }
-    
-    if ($passOAuthInHeader) {
-        $query_parameter_string = oauth_http_build_query($params, true);
-        $header                 = build_oauth_header($params, "Twitter API");
-        $headers[]              = $header;
-    } else {
-        $query_parameter_string = oauth_http_build_query($params);
-    }
-    
-    // POST or GET the request
-    
-    if ($usePost) {
-        $request_url = $url;
-        logit("tweet:INFO:request_url:$request_url");
-        logit("tweet:INFO:post_body:$query_parameter_string");
-        $headers[] = 'Content-Type: application/x-www-form-urlencoded';
-        $response  = do_post($request_url, $query_parameter_string, $puerto, $headers);
-    } else {
-        $request_url = $url . ($query_parameter_string ? ('?' . $query_parameter_string) : '');
-        logit("tweet:INFO:request_url:$request_url");
-        $response = do_get($request_url, $puerto, $headers);
-    }
-    
-    // extract successful response
-    
-    if (!empty($response)) {
-        list($info, $header, $body) = $response;
-        
-        if ($body) {
-            logit("tweet:INFO:response:");
-        }
-        
-        $retarr = $response;
-    }
-    
-    return $retarr;
 }
 
 
@@ -132,54 +67,40 @@ function Unfollower($consumer_key, $consumer_secret, $access_token, $access_toke
     $check_valor_parametros[0] = '-1';
     $check_valor_parametros[1] = $user_name;
     
-    //obtenemos a las personas que seguimos
+    //obtenemos a las personas que seguimos  
+    $responseCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false,'friends/ids', $check_valores, $check_valor_parametros);
     
-    $responseCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/friends/ids.json', $check_valores, $check_valor_parametros, true);
-    
-    //La respuesta consta de 3 partes, con la funcion list metemos esas partes en diferentes variables
-    list($info, $header, $body) = $responseCheck;
-    
-    //decodificamos la parte de body, al poner el segundo argumento como true decimos que lo convierta a un arreglo
-    //el cual guardamos y llamamos ids.
-    $ids = json_decode($body, true);
-    
-    
+   
     //Repetimos para obtener los followers
-    $responseCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/followers/ids.json', $check_valores, $check_valor_parametros, true);
-    list($info, $header, $body) = $responseCheck;
-    $idsFollowers = json_decode($body, true);
+    $responseCheck2 = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, 'followers/ids', $check_valores, $check_valor_parametros);
     
     //ordenamos a los followers para poder hacer la busqueda
-    sort($idsFollowers['ids']);
+    $idsFollowers = (array)$responseCheck2->{'ids'};
+    sort($idsFollowers);
     $limitePeticiones = 0;
-    
-    
-    //buscamos que cada uno de nuestros sea un follower de lo contrario lo dejamos de seguir
-    foreach ($ids['ids'] as $amigoActual) {
-        
+     
+    //buscamos que cada uno de nuestros amigos sea un follower de lo contrario lo dejamos de seguir
+    foreach ($responseCheck->{'ids'} as $amigoActual) {    
         if ($limitePeticiones < CONST_LIMITEPETICIONES) {
             $check_valores2[0]          = 'user_id';
             $check_valor_parametros2[0] = $amigoActual;
-            
+                
             if ($only_nonfollowers) {
-                if (FALSE == binarySearch($idsFollowers['ids'], $amigoActual)) {
-                    print("Dejando de seguir al amigo " . $limitePeticiones . " de " . CONST_LIMITEPETICIONES . "<br />");
-                    $responseCheck              = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, true, 'https://api.twitter.com/1.1/friendships/destroy.json', $check_valores2, $check_valor_parametros2,true);
+                if (FALSE == binarySearch($idsFollowers, $amigoActual)) {
+                    print("Dejando de seguir al amigo: id ".$amigoActual."--peticion: ". $limitePeticiones . " de " . CONST_LIMITEPETICIONES . "<br />");
+                    $responseCheck              = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, 'friendships/destroy', $check_valores2, $check_valor_parametros2);
                     $limitePeticiones++;
                 }
                 
-            } else {
-                $responseCheck              = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, true, 'https://api.twitter.com/1.1/friendships/destroy.json', $check_valores2, $check_valor_parametros2,true);
+            } else {          
+                $responseCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, 'friendships/destroy', $check_valores2, $check_valor_parametros2);
                 $limitePeticiones++;
             }
 
         } else {
             break;
-        }
-        
+        }     
     }
-    
-    
 }
 
 /*
@@ -201,13 +122,11 @@ function topicFollow($consumer_key, $consumer_secret, $access_token, $access_tok
     $check_valor_parametros[0] = $topic;
     $check_valores[1]          = 'result_type';
     $check_valor_parametros[1] = 'recent';
-    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true,
-        'https://api.twitter.com/1.1/search/tweets.json', $check_valores, $check_valor_parametros,true);
-    list($info, $header, $body) = $responseCheck;
-    $ids           = json_decode($body, true);
-    if(sizeof($ids['statuses']) > 0)
+    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false,
+        'search/tweets', $check_valores, $check_valor_parametros);
+    if(sizeof($responseCheck->{'statuses'}) > 0)
     {
-        $id_especifico = $ids['statuses'][0]['user']['id'];
+        $id_especifico = $responseCheck->{'statuses'}[0]->{'user'}->{'id'};
         //llamamos a la funcion para seguir al usuario que obtuvimos anteriormente
         print("<table><tr><td>Trending Topic:".$topic."</td><td>");
         followUser($consumer_key, $consumer_secret, $access_token, $access_token_secret, $id_especifico, $user_name, $mensaje);
@@ -237,54 +156,79 @@ function followUser($consumer_key, $consumer_secret, $access_token, $access_toke
     $check_valor_parametros[0] =$user_name;
     $check_valores[1]          = 'target_id';
     $check_valor_parametros[1] =$id_whom_follow;
-    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/friendships/show.json', $check_valores, $check_valor_parametros,true);
-    list($info, $header, $body) = $responseCheck;
-    $datosTarget           = json_decode($body, true);
-    $status = $datosTarget["relationship"]["source"]["following"];
+    $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, 'friendships/show', $check_valores, $check_valor_parametros);
+    $status = $responseCheck->{'relationship'}->{'source'}->{'following'};
 
     if($status != 1){
         
-        //Obtiene el ultimo tweet
+        //Obtiene mi ultimo tweet
         $check_valores[0]          = 'screen_name';
         $check_valor_parametros[0] = $user_name;
         $check_valores[1]          = 'count';
         $check_valor_parametros[1] =1;
         $check_valor[2] = 'exclude_replies';
         $check_valor_parametros[2] = 'false';
-        $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, true, 'https://api.twitter.com/1.1/statuses/user_timeline.json', $check_valores, $check_valor_parametros,true);
-        list($info, $header, $body) = $responseCheck;
-        $tweetId           = json_decode($body, true);
-        $tweetId=$tweetId[0]['id_str'];
+        $lastTweetResponseCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, false, 'statuses/user_timeline', $check_valores, $check_valor_parametros);
+        
+        // Obtenemos el id del tweet.
+        $tweetId=$lastTweetResponseCheck[0]->{'id_str'};
 
         //Borra el tweet
         unset($check_valores[0]);
         unset($check_valor_parametros[0]);
         unset($check_valores[1]);
         unset($check_valor_parametros[1]);
-        $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, true, 'https://api.twitter.com/1.1/statuses/destroy/'.$tweetId.'.json', $check_valores, $check_valor_parametros,true); 
+        $deleteResponseCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, 'statuses/destroy/'.$tweetId, $check_valores, $check_valor_parametros); 
 
 
-        //Crea el tweet
+        //Crea el tweet hacia el usuario
        $check_valores[0]          = 'status';
-       $check_valor_parametros[0] = "@".$datosTarget["relationship"]["target"]["screen_name"].$mensaje;
+       $check_valor_parametros[0] = "@".$responseCheck->{'relationship'}->{'target'}->{'screen_name'}.$mensaje;
        unset($check_valores[1]);
        unset($check_valor_parametros[1]);
-       $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, true, 'https://api.twitter.com/1.1/statuses/update.json', $check_valores, $check_valor_parametros,true); 
+       $newTweetCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, 'statuses/update', $check_valores, $check_valor_parametros); 
 
        //Sigue al usuario
        $check_valores[0]          = 'user_id';
        $check_valor_parametros[0] =$id_whom_follow;
        unset($check_valores[1]);
        unset($check_valor_parametros[1]);
-       $responseCheck             = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, true, 'https://api.twitter.com/1.1/friendships/create.json', $check_valores, $check_valor_parametros,true); 
-       echo "Siguiendo a ".$datosTarget["relationship"]["target"]["screen_name"]."<br />";
+       $followResponseCheck = function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, true, 'friendships/create', $check_valores, $check_valor_parametros); 
+       echo "Siguiendo a ".$responseCheck->{'relationship'}->{'target'}->{'screen_name'}."<br />";
       //TODO: Verificar que la respuesta sea 200
 
- 
-
     }else{
-        print ("Ya estas siguiendo al usuario: ".$datosTarget["relationship"]["target"]["screen_name"]."con id ".$datosTarget["relationship"]["source"]["id"]);
+        print ("Ya estas siguiendo al usuario: ".$responseCheck->{'relationship'}->{'target'}->{'screen_name'}."con id ".$responseCheck->{'relationship'}->{'source'}->{'id'});
     }
+}
+
+
+/*
+ *
+ * Hace la peticion post o get al servidor.
+ *
+ *
+ */
+function function_post($consumer_key, $consumer_secret, $access_token, $access_token_secret, $usePost, $url, $valores, $valor_parametro)
+{
+    $connection = new TwitterOAuth($consumer_key, $consumer_secret, $access_token, $access_token_secret);
+    for ($i = 0; $i < count($valores); $i++) {
+        $params[$valores[$i]] = $valor_parametro[$i];
+    }
+    
+    //POST or GET the request
+    
+    if ($usePost) {
+    if(!isset($params) || null == $params)
+    {
+        $params = array();
+    }
+        $response = $connection->post($url, $params);
+    } else {
+        $response = $connection->get($url, $params);
+    }
+     
+    return $response;
 }
 
 ?>

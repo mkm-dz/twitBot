@@ -37,9 +37,9 @@ if (!function_exists ( "GetTrendings" ))
 	    $html = file_get_contents("http://www.trendinalia.com/twitter-trending-topics/mexico");
 	    $first_token  = split("#", $html);
 	    
-	    for($i=0;$i<$numberOfTopics;$i++)
+	    for($i=1;$i<=$numberOfTopics;$i++)
 	    {
-	        $topicArray[$i] = split("\"", $first_token[$i])[0];
+	        $topicArray[$i-1] = split("\"", $first_token[$i])[0];
 	    }
 
         return $topicArray;
@@ -56,7 +56,7 @@ if (!function_exists ( "GetTrending" ))
 	    $topicArray = GetTrendings(7);
 	    if(sizeof($topicArray) > 0)
 	    {
-    	    $randomIndex = rand(0, sizeof($topicArray));
+    	    $randomIndex = rand(0, sizeof($topicArray)-1);
     	    return $topicArray[$randomIndex];
 	    }
 	    else
